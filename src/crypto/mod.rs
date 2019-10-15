@@ -5,17 +5,32 @@ use rand::rngs::OsRng;
 use secp256k1::{key, Secp256k1, Signature as secpSignature};
 use std::fmt;
 
-pub struct PrivateKey(key::SecretKey);
+pub trait PublicKey {
+    fn bytes(&self) -> &[u8];
+    fn hex_string(&self) -> String;
+    fn hash(&self) -> &[u8];
+    fn verify(&self, data: &[u8], sig: &[u8]) -> bool;
+}
 
-impl fmt::Display for PrivateKey {
+pub trait PrivateKey {
+    fn bytes(&self) -> &[u8];
+    fn hex_string(&self) -> String;
+    fn publicKey(&self) -> dyn PublicKey;
+    fn sign(&self, data: &[u8]) -> &[u8];
+    fn zero(&self);
+}
+
+struct PrivKey(key::SecretKey);
+
+impl fmt::Display for PrivKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::LowerHex::fmt(&self.0, f)
     }
 }
 
-pub struct PublicKey(key::PublicKey);
+struct PubKey(key::PublicKey);
 
-impl fmt::Display for PublicKey {
+impl fmt::Display for PubKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::LowerHex::fmt(&self.0, f)
     }
@@ -23,15 +38,15 @@ impl fmt::Display for PublicKey {
 
 pub struct Signature(pub [u8; 64]);
 
-impl PrivateKey {
-    pub fn public_key(&self) -> PublicKey {
+impl PrivKey {
+    pub fn public_key(&self) -> PubKey {
         let secp = Secp256k1::signing_only();
-        PublicKey(key::PublicKey::from_secret_key(&secp, &self.0))
+        PubKey(key::PublicKey::from_secret_key(&secp, &self.0))
     }
 
     pub fn from_slice(raw: &[u8]) -> Self {
         let key = key::SecretKey::from_slice(raw).expect("invalid private key");
-        PrivateKey(key)
+        PrivKey(key)
     }
 
     pub fn sign(&self, hash: &hash::Hash256b) -> Signature {
@@ -42,9 +57,10 @@ impl PrivateKey {
     }
 }
 
-pub fn generate_key() -> PrivateKey {
+pub fn generate_key() -> Box<dyn PrivateKey> {
     let mut rng = OsRng::new().expect("filed to get OsRng");
-    PrivateKey(key::SecretKey::new(&mut rng))
+    // PrivKey(key::SecretKey::new(&mut rng))
+    // TODO: impl PrivateKey for PrivKey
 }
 mod tests {
     use super::*;

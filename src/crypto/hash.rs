@@ -4,9 +4,9 @@ use tiny_keccak::Keccak;
 pub struct Hash160b(pub [u8; constants::HASH_160_SIZE]);
 pub struct Hash256b(pub [u8; constants::HASH_256_SIZE]);
 
-pub fn hash160b(x: &[u8]) -> Hash160b {
+pub fn hash160b(x: Vec<u8>) -> Hash160b {
     let mut h256: [u8; constants::HASH_256_SIZE] = [0; constants::HASH_256_SIZE];
-    Keccak::keccak256(x, &mut h256);
+    Keccak::keccak256(&x[..], &mut h256);
 
     let mut res: [u8; constants::HASH_160_SIZE] = [0; constants::HASH_160_SIZE];
     for i in 0..constants::HASH_160_SIZE {
@@ -15,9 +15,9 @@ pub fn hash160b(x: &[u8]) -> Hash160b {
     Hash160b(res)
 }
 
-pub fn hash256b(x: &[u8]) -> Hash256b {
+pub fn hash256b(x: Vec<u8>) -> Hash256b {
     let mut res: [u8; constants::HASH_256_SIZE] = [0; constants::HASH_256_SIZE];
-    Keccak::keccak256(x, &mut res);
+    Keccak::keccak256(&x[..], &mut res);
     Hash256b(res)
 }
 
