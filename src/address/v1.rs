@@ -1,16 +1,9 @@
 use super::*;
 use crate::crypto::hash;
-use bech32;
-use std::error;
+use bech32::{self, ToBase32};
 
-// _v1 is a singleton and defines V1 address metadata
-pub const _v1: V1 = V1 { address_length: 20 };
-
-pub enum Error {
-    BechError(bech32::Error),
-    InvalidAddrLen(usize),
-    AddrPrefixNotMatch,
-}
+// _V1 is a singleton and defines V1 address metadata
+pub const _V1: V1 = V1 { address_length: 20 };
 
 pub struct V1 {
     pub address_length: usize,
@@ -18,15 +11,15 @@ pub struct V1 {
 
 impl V1 {
     // from_string decodes an encoded address string into an address struct
-    fn from_string(&self, encodedAddr: &str) -> Result<AddrV1, Error> {
+    pub fn from_string(&self, encodedAddr: &str) -> Result<AddrV1, Error> {
         let payload = match self.decode_bech32(encodedAddr) {
             Ok(r) => r,
             Err(e) => return Err(e),
         };
-        self.from_bytes(payload)
+        self.from_bytes(&payload[..])
     }
     // from_bytes converts a byte array into an address struct
-    fn from_bytes(&self, bytes: Vec<u8>) -> Result<AddrV1, Error> {
+    pub fn from_bytes(&self, bytes: &[u8]) -> Result<AddrV1, Error> {
         if bytes.len() != self.address_length {
             return Err(Error::InvalidAddrLen(bytes.len()));
         };
@@ -54,22 +47,18 @@ pub struct AddrV1 {
     payload: hash::Hash160b,
 }
 
-impl AddrV1 {}
+impl Address for AddrV1 {
+    fn string(&self) -> String {
+        let payload = self.payload.0;
+        let grouped = bech32::convert_bits(&payload[..], 8, 5, true)
+            .expect("Error when grouping the payload into 5 bit groups.");
+        bech32::encode(prefix(), grouped.to_base32())
+            .expect("Error when encoding bytes into a base32 string.")
+    }
 
-// func (v *v1) FromString(encodedAddr string) (*AddrV1, error) {
-// 	payload, err := v.decodeBech32(encodedAddr)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return v.FromBytes(payload)
-// }
+    fn bytes(&self) -> &[u8] {
+        &self.payload.0
+    }
+}
 
-// FromBytes converts a byte array into an address struct
-// func (v *v1) FromBytes(bytes []byte) (*AddrV1, error) {
-// 	if len(bytes) != v.address_length {
-// 		return nil, errors.Wrapf(ErrInvalidAddr, "invalid address length in bytes: %d", len(bytes))
-// 	}
-// 	return &AddrV1{
-// 		payload: hash.BytesToHash160(bytes),
-// 	}, nil
-// }
+// TODO: write several test after crypto part is finished

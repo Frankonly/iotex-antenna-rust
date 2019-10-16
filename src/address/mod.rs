@@ -21,7 +21,13 @@ pub trait Address {
     fn bytes(&self) -> &[u8];
 }
 
-// pub fn from_string(encodedAddr &str) -> Result<dyn Address, Error>
+pub fn from_string(encoded_addr: &str) -> Result<v1::AddrV1, Error> {
+    v1::_V1.from_string(encoded_addr)
+}
+
+pub fn from_bytes(bytes: &[u8]) -> Result<v1::AddrV1, Error> {
+    v1::_V1.from_bytes(bytes)
+}
 
 fn prefix() -> &'static str {
     let mut prefix = MAINNET_PREFIX;
@@ -31,4 +37,10 @@ fn prefix() -> &'static str {
         }
     }
     prefix
+}
+
+pub enum Error {
+    BechError(bech32::Error),
+    InvalidAddrLen(usize),
+    AddrPrefixNotMatch,
 }

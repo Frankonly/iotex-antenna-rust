@@ -4,7 +4,7 @@ use tiny_keccak::Keccak;
 pub struct Hash160b(pub [u8; constants::HASH_160_SIZE]);
 pub struct Hash256b(pub [u8; constants::HASH_256_SIZE]);
 
-pub fn hash160b(x: Vec<u8>) -> Hash160b {
+pub fn hash160b(x: &[u8]) -> Hash160b {
     let mut h256: [u8; constants::HASH_256_SIZE] = [0; constants::HASH_256_SIZE];
     Keccak::keccak256(&x[..], &mut h256);
 
@@ -15,7 +15,7 @@ pub fn hash160b(x: Vec<u8>) -> Hash160b {
     Hash160b(res)
 }
 
-pub fn hash256b(x: Vec<u8>) -> Hash256b {
+pub fn hash256b(x: &[u8]) -> Hash256b {
     let mut res: [u8; constants::HASH_256_SIZE] = [0; constants::HASH_256_SIZE];
     Keccak::keccak256(&x[..], &mut res);
     Hash256b(res)
@@ -37,10 +37,10 @@ mod tests {
             ),
         ];
         for test in tests.iter() {
-            let h = hash256b(test.0.as_bytes().to_vec());
+            let h = hash256b(test.0.as_bytes());
             assert_eq!(hex::encode(h.0), test.1.to_string());
 
-            let h = hash160b(test.0.as_bytes().to_vec());
+            let h = hash160b(test.0.as_bytes());
             assert_eq!(hex::encode(h.0), test.1[24..]);
         }
     }
