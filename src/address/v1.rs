@@ -4,20 +4,21 @@ use bech32;
 use std::error;
 
 // _v1 is a singleton and defines V1 address metadata
-pub const _v1: V1 = V1 { AddressLength: 20 };
+pub const _v1: V1 = V1 { address_length: 20 };
 
 pub enum Error {
     BechError(bech32::Error),
     InvalidAddrLen(usize),
+    AddrPrefixNotMatch,
 }
 
-struct V1 {
-    pub AddressLength: usize,
+pub struct V1 {
+    pub address_length: usize,
 }
 
 impl V1 {
     // from_string decodes an encoded address string into an address struct
-    fn from_string(&self, encodedAddr: &str) -> Result<&AddrV1, Error> {
+    fn from_string(&self, encodedAddr: &str) -> Result<AddrV1, Error> {
         let payload = match self.decode_bech32(encodedAddr) {
             Ok(r) => r,
             Err(e) => return Err(e),
@@ -25,19 +26,23 @@ impl V1 {
         self.from_bytes(payload)
     }
     // from_bytes converts a byte array into an address struct
-    fn from_bytes(&self, bytes: Vec<u8>) -> Result<&AddrV1, Error> {
-        if bytes.len() != self.AddressLength {
+    fn from_bytes(&self, bytes: Vec<u8>) -> Result<AddrV1, Error> {
+        if bytes.len() != self.address_length {
             return Err(Error::InvalidAddrLen(bytes.len()));
         };
-        Ok(&AddrV1 {
+        let addr = AddrV1 {
             payload: hash::hash160b(bytes),
-        })
+        };
+        Ok(addr)
     }
     fn decode_bech32(&self, encodedAddr: &str) -> Result<Vec<u8>, Error> {
         let (hrp, grouped) = match bech32::decode(encodedAddr) {
             Ok(r) => r,
             Err(e) => return Err(Error::BechError(e)),
         };
+        if hrp != prefix() {
+            return Err(Error::AddrPrefixNotMatch);
+        }
         match bech32::convert_bits(&grouped[..], 5, 8, false) {
             Ok(r) => Ok(r),
             Err(e) => Err(Error::BechError(e)),
@@ -61,7 +66,7 @@ impl AddrV1 {}
 
 // FromBytes converts a byte array into an address struct
 // func (v *v1) FromBytes(bytes []byte) (*AddrV1, error) {
-// 	if len(bytes) != v.AddressLength {
+// 	if len(bytes) != v.address_length {
 // 		return nil, errors.Wrapf(ErrInvalidAddr, "invalid address length in bytes: %d", len(bytes))
 // 	}
 // 	return &AddrV1{

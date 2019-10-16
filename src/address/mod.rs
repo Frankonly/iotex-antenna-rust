@@ -1,17 +1,19 @@
 pub mod v1;
 
-// MainnetPrefix is the prefix added to the human readable address of mainnet
-const MainnetPrefix: &str = "io";
-// TestnetPrefix is the prefix added to the human readable address of testnet
-const TestnetPrefix: &str = "it";
+// MAINNET_PREFIX is the prefix added to the human readable address of mainnet
+const MAINNET_PREFIX: &str = "io";
+// TESTNET_PREFIX is the prefix added to the human readable address of testnet
+const TESTNET_PREFIX: &str = "it";
 
-// ZeroAddress is the IoTeX address whose hash160 is all zero
-const ZeroAddress: &str = "io1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqd39ym7";
+// ZERO_ADDRESS is the IoTeX address whose hash160 is all zero
+const ZERO_ADDRESS: &str = "io1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqd39ym7";
 
-static IsTestNet: bool = false;
+static mut IS_TEST_NET: bool = false;
 
-pub fn setNetwork(isTestNet: bool) {
-    IsTestNet = isTestNet;
+pub fn set_network(is_test_net: bool) {
+    unsafe {
+        IS_TEST_NET = is_test_net;
+    }
 }
 
 pub trait Address {
@@ -22,9 +24,11 @@ pub trait Address {
 // pub fn from_string(encodedAddr &str) -> Result<dyn Address, Error>
 
 fn prefix() -> &'static str {
-    let prefix = MainnetPrefix;
-    if IsTestNet {
-        prefix = TestnetPrefix;
+    let mut prefix = MAINNET_PREFIX;
+    unsafe {
+        if IS_TEST_NET {
+            prefix = TESTNET_PREFIX;
+        }
     }
     prefix
 }

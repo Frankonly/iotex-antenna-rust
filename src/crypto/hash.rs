@@ -37,10 +37,10 @@ mod tests {
             ),
         ];
         for test in tests.iter() {
-            let h = hash256b(test.0.as_bytes());
+            let h = hash256b(test.0.as_bytes().to_vec());
             assert_eq!(hex::encode(h.0), test.1.to_string());
 
-            let h = hash160b(test.0.as_bytes());
+            let h = hash160b(test.0.as_bytes().to_vec());
             assert_eq!(hex::encode(h.0), test.1[24..]);
         }
     }
