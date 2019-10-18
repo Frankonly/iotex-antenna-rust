@@ -11,8 +11,8 @@ pub struct V1 {
 
 impl V1 {
     // from_string decodes an encoded address string into an address struct
-    pub fn from_string(&self, encodedAddr: &str) -> Result<AddrV1, Error> {
-        let payload = match self.decode_bech32(encodedAddr) {
+    pub fn from_string(&self, encoded_addr: &str) -> Result<AddrV1, Error> {
+        let payload = match self.decode_bech32(encoded_addr) {
             Ok(r) => r,
             Err(e) => return Err(e),
         };
@@ -28,8 +28,8 @@ impl V1 {
         };
         Ok(addr)
     }
-    fn decode_bech32(&self, encodedAddr: &str) -> Result<Vec<u8>, Error> {
-        let (hrp, grouped) = match bech32::decode(encodedAddr) {
+    fn decode_bech32(&self, encoded_addr: &str) -> Result<Vec<u8>, Error> {
+        let (hrp, grouped) = match bech32::decode(encoded_addr) {
             Ok(r) => r,
             Err(e) => return Err(Error::BechError(e)),
         };
