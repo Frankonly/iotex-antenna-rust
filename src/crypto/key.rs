@@ -1,3 +1,4 @@
+use super::hash;
 use hex;
 use rand::rngs::OsRng;
 use secp256k1::{Message, PublicKey, SecretKey, Signature};
@@ -75,6 +76,14 @@ pub fn verify_sig(data: &[u8], sig: &[u8], public_key_string: String) -> Result<
     }
 }
 
+pub fn pubkey_hash(pubkey: String) -> Result<hash::Hash160b, Error> {
+    let bytes = match hex::decode(pubkey) {
+        Ok(r) => r,
+        Err(_) => return Err(Error::InvalidPublicKey),
+    };
+    Ok(hash::hash160b(&bytes[1..]))
+}
+
 #[test]
 fn test_from_slice() {
     let mut bytes = [0u8; 32];
@@ -93,6 +102,14 @@ fn test_from_slice() {
     assert_eq!(
         key.public_key(),
         String::from("044e18306ae9ef4ec9d07bf6e705442d4d1a75e6cdf750330ca2d880f2cc54607c9c33deb9eae9c06e06e04fe9ce3d43962cc67d5aa34fbeb71270d4bad3d648d9")
+    );
+
+    assert_eq!(
+        hex::encode(match pubkey_hash(key.public_key()) {
+            Ok(r) => r.0,
+            Err(e) => panic!(e),
+        }),
+        String::from("3f9c20bcec9de520d88d98cbe07ee7b5ded0dac4"),
     );
 
     hex::decode_to_slice(
