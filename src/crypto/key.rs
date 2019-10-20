@@ -105,10 +105,7 @@ fn test_from_slice() {
     );
 
     assert_eq!(
-        hex::encode(match pubkey_hash(key.public_key()) {
-            Ok(r) => r.0,
-            Err(e) => panic!(e),
-        }),
+        hex::encode(pubkey_hash(key.public_key()).unwrap().0),
         String::from("3f9c20bcec9de520d88d98cbe07ee7b5ded0dac4"),
     );
 
@@ -122,13 +119,7 @@ fn test_from_slice() {
                 hex::encode(&sig[..]),
         String::from("99f4ef1005ae6c43548520e08dd11477e9ea59317087f9c6f33bc79eb701b14b043ff0d177bc419e585c0ecae42420fabb837e602c8a3578ea17dd1a8ed862e301")
     );
-    assert_eq!(
-        match verify_sig(&bytes, &sig, key.public_key()) {
-            Ok(r) => r,
-            Err(_) => panic!(),
-        },
-        true
-    );
+    assert_eq!(verify_sig(&bytes, &sig, key.public_key()).unwrap(), true);
 }
 
 #[test]

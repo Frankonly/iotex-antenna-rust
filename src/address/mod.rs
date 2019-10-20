@@ -1,3 +1,4 @@
+use std::{error::Error, fmt};
 pub mod v1;
 
 // MAINNET_PREFIX is the prefix added to the human readable address of mainnet
@@ -21,11 +22,11 @@ pub trait Address {
     fn bytes(&self) -> &[u8];
 }
 
-pub fn from_string(encoded_addr: &str) -> Result<v1::AddrV1, Error> {
+pub fn from_string(encoded_addr: &str) -> Result<v1::AddrV1, AddrError> {
     v1::_V1.from_string(encoded_addr)
 }
 
-pub fn from_bytes(bytes: &[u8]) -> Result<v1::AddrV1, Error> {
+pub fn from_bytes(bytes: &[u8]) -> Result<v1::AddrV1, AddrError> {
     v1::_V1.from_bytes(bytes)
 }
 
@@ -39,8 +40,29 @@ fn prefix() -> &'static str {
     prefix
 }
 
-pub enum Error {
+#[derive(Copy, Clone, PartialEq, Debug)]
+pub enum AddrError {
     BechError(bech32::Error),
     InvalidAddrLen(usize),
     AddrPrefixNotMatch,
+}
+
+impl fmt::Display for AddrError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            AddrError::BechError(e) => write!(f, "bech32 error, {})", e.description()),
+            AddrError::InvalidAddrLen(n) => write!(f, "invalid address length ({})", n),
+            AddrError::AddrPrefixNotMatch => write!(f, "address's prefix doesn't match"),
+        }
+    }
+}
+
+impl Error for AddrError {
+    fn description(&self) -> &str {
+        match *self {
+            AddrError::BechError(_) => "bech32 error",
+            AddrError::InvalidAddrLen(_) => "invalid address length",
+            AddrError::AddrPrefixNotMatch => "address's prefix doesn't match",
+        }
+    }
 }

@@ -11,7 +11,7 @@ pub struct V1 {
 
 impl V1 {
     // from_string decodes an encoded address string into an address struct
-    pub fn from_string(&self, encoded_addr: &str) -> Result<AddrV1, Error> {
+    pub fn from_string(&self, encoded_addr: &str) -> Result<AddrV1, AddrError> {
         let payload = match self.decode_bech32(encoded_addr) {
             Ok(r) => r,
             Err(e) => return Err(e),
@@ -19,26 +19,26 @@ impl V1 {
         self.from_bytes(&payload[..])
     }
     // from_bytes converts a byte array into an address struct
-    pub fn from_bytes(&self, bytes: &[u8]) -> Result<AddrV1, Error> {
+    pub fn from_bytes(&self, bytes: &[u8]) -> Result<AddrV1, AddrError> {
         if bytes.len() != self.address_length {
-            return Err(Error::InvalidAddrLen(bytes.len()));
+            return Err(AddrError::InvalidAddrLen(bytes.len()));
         };
         let addr = AddrV1 {
             payload: hash::bytes_to_hash160(&bytes[..20]),
         };
         Ok(addr)
     }
-    fn decode_bech32(&self, encoded_addr: &str) -> Result<Vec<u8>, Error> {
+    fn decode_bech32(&self, encoded_addr: &str) -> Result<Vec<u8>, AddrError> {
         let (hrp, grouped) = match bech32::decode(encoded_addr) {
             Ok(r) => r,
-            Err(e) => return Err(Error::BechError(e)),
+            Err(e) => return Err(AddrError::BechError(e)),
         };
         if hrp != prefix() {
-            return Err(Error::AddrPrefixNotMatch);
+            return Err(AddrError::AddrPrefixNotMatch);
         }
         match bech32::convert_bits(&grouped[..], 5, 8, false) {
             Ok(r) => Ok(r),
-            Err(e) => Err(Error::BechError(e)),
+            Err(e) => Err(AddrError::BechError(e)),
         }
     }
 }

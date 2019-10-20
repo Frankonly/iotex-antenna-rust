@@ -1,5 +1,5 @@
 use lazy_static::lazy_static;
-use secp256k1::Error as secpError;
+use std::{error, fmt};
 
 lazy_static! {
     static ref SECP256K1: secp256k1::Secp256k1<secp256k1::All> = secp256k1::Secp256k1::new();
@@ -11,8 +11,29 @@ pub mod constants;
 pub mod hash;
 pub mod key;
 
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub enum Error {
     InvalidMessageLen(usize),
     InvalidSignature,
     InvalidPublicKey,
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Error::InvalidMessageLen(n) => write!(f, "invalid message length ({})", n),
+            Error::InvalidSignature => write!(f, "invalid signature"),
+            Error::InvalidPublicKey => write!(f, "invalid public key"),
+        }
+    }
+}
+
+impl error::Error for Error {
+    fn description(&self) -> &str {
+        match *self {
+            Error::InvalidMessageLen(_) => "invalid message length",
+            Error::InvalidSignature => "invalid signature",
+            Error::InvalidPublicKey => "invalid length",
+        }
+    }
 }
