@@ -24,7 +24,7 @@ impl V1 {
             return Err(Error::InvalidAddrLen(bytes.len()));
         };
         let addr = AddrV1 {
-            payload: hash::hash160b(bytes),
+            payload: hash::bytes_to_hash160(&bytes[..20]),
         };
         Ok(addr)
     }
@@ -48,11 +48,10 @@ pub struct AddrV1 {
 }
 
 impl Address for AddrV1 {
+    // TODO: fix string()'s wrong output
     fn string(&self) -> String {
         let payload = self.payload.0;
-        let grouped = bech32::convert_bits(&payload[..], 8, 5, true)
-            .expect("Error when grouping the payload into 5 bit groups.");
-        bech32::encode(prefix(), grouped.to_base32())
+        bech32::encode(prefix(), payload.to_base32())
             .expect("Error when encoding bytes into a base32 string.")
     }
 
@@ -61,4 +60,28 @@ impl Address for AddrV1 {
     }
 }
 
-// TODO: write several test after crypto part is finished
+#[test]
+fn test_address() {
+    set_network(false);
+    let bytes = match hex::decode("3f9c20bcec9de520d88d98cbe07ee7b5ded0dac4") {
+        Ok(r) => r,
+        Err(e) => panic!(e),
+    };
+    let addr1 = match _V1.from_bytes(&bytes[..]) {
+        Ok(r) => r,
+        Err(e) => panic!(e),
+    };
+    let addr2 = match _V1.from_string("io187wzp08vnhjjpkydnr97qlh8kh0dpkkytfam8j") {
+        Ok(r) => r,
+        Err(e) => panic!(e),
+    };
+    assert_eq!(addr1.bytes(), addr2.bytes());
+    assert_eq!(
+        hex::encode(addr1.bytes()),
+        String::from("3f9c20bcec9de520d88d98cbe07ee7b5ded0dac4")
+    );
+    assert_eq!(
+        addr1.string(),
+        String::from("io187wzp08vnhjjpkydnr97qlh8kh0dpkkytfam8j")
+    )
+}

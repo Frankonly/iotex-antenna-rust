@@ -1,23 +1,47 @@
-use super::constants;
+use super::constants::*;
 use tiny_keccak::Keccak;
 
-pub struct Hash160b(pub [u8; constants::HASH_160_SIZE]);
-pub struct Hash256b(pub [u8; constants::HASH_256_SIZE]);
+pub struct Hash160b(pub [u8; HASH_160_SIZE]);
+pub struct Hash256b(pub [u8; HASH_256_SIZE]);
 
 pub fn hash160b(x: &[u8]) -> Hash160b {
-    let mut h256: [u8; constants::HASH_256_SIZE] = [0; constants::HASH_256_SIZE];
+    let mut h256: [u8; HASH_256_SIZE] = [0; HASH_256_SIZE];
     Keccak::keccak256(&x[..], &mut h256);
 
-    let mut res: [u8; constants::HASH_160_SIZE] = [0; constants::HASH_160_SIZE];
-    for i in 0..constants::HASH_160_SIZE {
-        res[i] = h256[constants::HASH_256_SIZE - constants::HASH_160_SIZE + i]
+    let mut res: [u8; HASH_160_SIZE] = [0; HASH_160_SIZE];
+    for i in 0..HASH_160_SIZE {
+        res[i] = h256[HASH_256_SIZE - HASH_160_SIZE + i]
     }
     Hash160b(res)
 }
 
 pub fn hash256b(x: &[u8]) -> Hash256b {
-    let mut res: [u8; constants::HASH_256_SIZE] = [0; constants::HASH_256_SIZE];
+    let mut res: [u8; HASH_256_SIZE] = [0; HASH_256_SIZE];
     Keccak::keccak256(&x[..], &mut res);
+    Hash256b(res)
+}
+
+pub fn bytes_to_hash160(bytes: &[u8]) -> Hash160b {
+    let mut b: &[u8] = bytes;
+    let mut res: [u8; HASH_160_SIZE] = [0; HASH_160_SIZE];
+    if b.len() > HASH_160_SIZE {
+        b = &b[b.len() - HASH_160_SIZE..];
+    }
+    for i in 0..b.len() {
+        res[HASH_160_SIZE - b.len() + i] = b[i]
+    }
+    Hash160b(res)
+}
+
+pub fn bytes_to_hash256(bytes: &[u8]) -> Hash256b {
+    let mut b: &[u8] = bytes;
+    let mut res: [u8; HASH_256_SIZE] = [0; HASH_256_SIZE];
+    if bytes.len() > HASH_256_SIZE {
+        b = &b[b.len() - HASH_256_SIZE..];
+    }
+    for i in 0..b.len() {
+        res[HASH_256_SIZE - b.len() + i] = b[i]
+    }
     Hash256b(res)
 }
 
