@@ -45,27 +45,23 @@ pub fn bytes_to_hash256(bytes: &[u8]) -> Hash256b {
     Hash256b(res)
 }
 
-mod tests {
-    extern crate hex;
-    use super::*;
-    #[test]
-    fn test_hash() {
-        let tests: [(&str, &str); 2] = [
-            (
-                "",
-                "c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
-            ),
-            (
-                "abc",
-                "4e03657aea45a94fc7d47ba826c8d667c0d1e6e33a64a036ec44f58fa12d6c45",
-            ),
-        ];
-        for test in tests.iter() {
-            let h = hash256b(test.0.as_bytes());
-            assert_eq!(hex::encode(h.0), test.1.to_string());
+#[test]
+fn test_hash() {
+    let tests: [(&str, &str); 2] = [
+        (
+            "",
+            "c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+        ),
+        (
+            "abc",
+            "4e03657aea45a94fc7d47ba826c8d667c0d1e6e33a64a036ec44f58fa12d6c45",
+        ),
+    ];
+    for test in tests.iter() {
+        let h = hash256b(test.0.as_bytes());
+        assert_eq!(hex::encode(h.0), test.1.to_string());
 
-            let h = hash160b(test.0.as_bytes());
-            assert_eq!(hex::encode(h.0), test.1[24..]);
-        }
+        let h = hash160b(test.0.as_bytes());
+        assert_eq!(hex::encode(h.0), test.1[24..]);
     }
 }
