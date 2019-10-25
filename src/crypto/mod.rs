@@ -15,6 +15,7 @@ pub mod key;
 pub enum Error {
     InvalidMessageLen(usize),
     InvalidSignature,
+    InvalidPrivateKey,
     InvalidPublicKey,
 }
 
@@ -23,6 +24,7 @@ impl fmt::Display for Error {
         match *self {
             Error::InvalidMessageLen(n) => write!(f, "invalid message length ({})", n),
             Error::InvalidSignature => write!(f, "invalid signature"),
+            Error::InvalidPrivateKey => write!(f, "invalid private key"),
             Error::InvalidPublicKey => write!(f, "invalid public key"),
         }
     }
@@ -33,7 +35,8 @@ impl error::Error for Error {
         match *self {
             Error::InvalidMessageLen(_) => "invalid message length",
             Error::InvalidSignature => "invalid signature",
-            Error::InvalidPublicKey => "invalid length",
+            Error::InvalidPrivateKey => "Invalid private key",
+            Error::InvalidPublicKey => "invalid public key",
         }
     }
 }

@@ -43,6 +43,7 @@ impl V1 {
     }
 }
 
+#[derive(Copy, Clone, Debug)]
 pub struct AddrV1 {
     payload: hash::Hash160b,
 }

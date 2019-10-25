@@ -11,6 +11,7 @@ pub trait PrivateKey {
     fn sign(&self, data: &[u8]) -> [u8; 65];
 }
 
+#[derive(Copy, Clone)]
 pub struct PrivKey {
     bytes: [u8; 32],
 }
@@ -76,7 +77,7 @@ pub fn verify_sig(data: &[u8], sig: &[u8], public_key_string: String) -> Result<
     }
 }
 
-pub fn pubkey_hash(pubkey: String) -> Result<hash::Hash160b, Error> {
+pub fn public_key_hash(pubkey: String) -> Result<hash::Hash160b, Error> {
     let bytes = match hex::decode(pubkey) {
         Ok(r) => r,
         Err(_) => return Err(Error::InvalidPublicKey),
@@ -84,9 +85,12 @@ pub fn pubkey_hash(pubkey: String) -> Result<hash::Hash160b, Error> {
     Ok(hash::hash160b(&bytes[1..]))
 }
 
-pub fn hex_string_to_private(hex_string:String)->PrivKey{
-    let mut bytes:[u8,32];
-    hex::decode_to_slice(hex_string, out: &mut [u8]);
+pub fn hex_string_to_private(hex_string: String) -> Result<PrivKey, Error> {
+    let mut data: [u8; 32] = [0; 32];
+    match hex::decode_to_slice(hex_string, &mut data) {
+        Ok(_) => Ok(PrivKey { bytes: data }),
+        Err(e) => Err(Error::InvalidPrivateKey),
+    }
 }
 
 #[test]
@@ -110,7 +114,7 @@ fn test_from_slice() {
     );
 
     assert_eq!(
-        hex::encode(pubkey_hash(key.public_key()).unwrap().0),
+        hex::encode(public_key_hash(key.public_key()).unwrap().0),
         String::from("3f9c20bcec9de520d88d98cbe07ee7b5ded0dac4"),
     );
 
