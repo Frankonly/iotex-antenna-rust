@@ -84,6 +84,11 @@ pub fn pubkey_hash(pubkey: String) -> Result<hash::Hash160b, Error> {
     Ok(hash::hash160b(&bytes[1..]))
 }
 
+pub fn hex_string_to_private(hex_string:String)->PrivKey{
+    let mut bytes:[u8,32];
+    hex::decode_to_slice(hex_string, out: &mut [u8]);
+}
+
 #[test]
 fn test_from_slice() {
     let mut bytes = [0u8; 32];
