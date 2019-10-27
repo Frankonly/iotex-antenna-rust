@@ -1,9 +1,9 @@
 use super::constants::*;
 use tiny_keccak::Keccak;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Hash160b(pub [u8; HASH_160_SIZE]);
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Hash256b(pub [u8; HASH_256_SIZE]);
 
 pub fn hash160b(x: &[u8]) -> Hash160b {

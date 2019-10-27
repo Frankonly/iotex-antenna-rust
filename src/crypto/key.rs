@@ -11,7 +11,7 @@ pub trait PrivateKey {
     fn sign(&self, data: &[u8]) -> [u8; 65];
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct PrivKey {
     bytes: [u8; 32],
 }
@@ -40,9 +40,11 @@ impl PrivKey {
     }
 
     pub fn sign(&self, data: &[u8]) -> [u8; 65] {
+        let hash = hash::hash256b(data);
+
         let secret_key = SecretKey::from_slice(&self.bytes).expect("32 bytes, within curve order");
 
-        let message = Message::from_slice(data).expect("32 bytes");
+        let message = Message::from_slice(&hash.0).expect("32 bytes");
 
         let sig = &SECP256K1.sign_recoverable(&message, &secret_key);
 
@@ -55,10 +57,8 @@ impl PrivKey {
 }
 
 pub fn verify_sig(data: &[u8], sig: &[u8], public_key_string: String) -> Result<bool, Error> {
-    let message = match Message::from_slice(data) {
-        Ok(r) => r,
-        Err(_) => return Err(Error::InvalidMessageLen(data.len())),
-    };
+    let hash = hash::hash256b(data);
+    let message = Message::from_slice(&hash.0).expect("32 bytes");
     let signature = match Signature::from_compact(&sig[..64]) {
         Ok(r) => r,
         Err(_) => return Err(Error::InvalidSignature),
@@ -89,7 +89,7 @@ pub fn hex_string_to_private(hex_string: String) -> Result<PrivKey, Error> {
     let mut data: [u8; 32] = [0; 32];
     match hex::decode_to_slice(hex_string, &mut data) {
         Ok(_) => Ok(PrivKey { bytes: data }),
-        Err(e) => Err(Error::InvalidPrivateKey),
+        Err(_) => Err(Error::InvalidPrivateKey),
     }
 }
 
@@ -125,8 +125,8 @@ fn test_from_slice() {
     .unwrap();
     let sig = key.sign(&bytes);
     assert_eq!(
-                hex::encode(&sig[..]),
-        String::from("99f4ef1005ae6c43548520e08dd11477e9ea59317087f9c6f33bc79eb701b14b043ff0d177bc419e585c0ecae42420fabb837e602c8a3578ea17dd1a8ed862e301")
+        hex::encode(&sig[..]),
+        String::from("eadf42d2ed96045b6d0060d952d40292a3f04e49867b4b3f96ef14d9d727640d72e4b350b889739330e818eff7341343cc8c9e6d6560513113dde9bfe0d9efa700")
     );
     assert_eq!(verify_sig(&bytes, &sig, key.public_key()).unwrap(), true);
 }
