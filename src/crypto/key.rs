@@ -2,6 +2,7 @@ use super::hash;
 use hex;
 use rand::rngs::OsRng;
 use secp256k1::{Message, PublicKey, SecretKey, Signature};
+use secp256k1::recovery::{RecoverableSignature, RecoveryId};
 
 use super::{Error, SECP256K1, SECP256K1_VERIFY};
 
@@ -53,6 +54,30 @@ impl PrivKey {
         sign[0..64].copy_from_slice(&signed[0..64]);
         sign[64] = recid.to_i32() as u8;
         sign
+    }
+
+    pub fn recover(&self, message: &[u8], signature: &[u8]) -> [u8; 65] {
+        let secret_key = SecretKey::from_slice(&self.bytes).expect("32 bytes, within curve order");
+        let public_key = PublicKey::from_secret_key(&SECP256K1, &secret_key);
+        let pubkey_raw = &public_key.serialize_uncompressed()[0..65];
+
+        let mut pubkey_rec = [0u8; 65];
+
+        let msg = Message::from_slice(&message).unwrap();
+        for i in 0..4 {
+            let rec_id = RecoveryId::from_i32(i as i32).unwrap();
+            let sig = RecoverableSignature::from_compact(&signature, rec_id).expect("convert to recoverable wrong");
+            if let Ok(rec_pubkey) = &SECP256K1.recover(&msg, &sig) {
+                let rec_pubkey_raw = &rec_pubkey.serialize_uncompressed()[0..65];
+                if rec_pubkey_raw == pubkey_raw {
+                    pubkey_rec[0..65].copy_from_slice(&rec_pubkey_raw[0..65]);
+                    break;
+                }
+            } else {
+                continue;
+                }
+        }
+        pubkey_rec
     }
 }
 
