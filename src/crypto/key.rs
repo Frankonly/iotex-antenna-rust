@@ -55,30 +55,6 @@ impl PrivKey {
         sign[64] = recid.to_i32() as u8;
         sign
     }
-
-    pub fn recover(&self, message: &[u8], signature: &[u8]) -> [u8; 65] {
-        let secret_key = SecretKey::from_slice(&self.bytes).expect("32 bytes, within curve order");
-        let public_key = PublicKey::from_secret_key(&SECP256K1, &secret_key);
-        let pubkey_raw = &public_key.serialize_uncompressed()[0..65];
-
-        let mut pubkey_rec = [0u8; 65];
-
-        let msg = Message::from_slice(&message).unwrap();
-        for i in 0..4 {
-            let rec_id = RecoveryId::from_i32(i as i32).unwrap();
-            let sig = RecoverableSignature::from_compact(&signature, rec_id).expect("convert to recoverable wrong");
-            if let Ok(rec_pubkey) = &SECP256K1.recover(&msg, &sig) {
-                let rec_pubkey_raw = &rec_pubkey.serialize_uncompressed()[0..65];
-                if rec_pubkey_raw == pubkey_raw {
-                    pubkey_rec[0..65].copy_from_slice(&rec_pubkey_raw[0..65]);
-                    break;
-                }
-            } else {
-                continue;
-                }
-        }
-        pubkey_rec
-    }
 }
 
 pub fn verify_sig(data: &[u8], sig: &[u8], public_key_string: String) -> Result<bool, Error> {
@@ -116,6 +92,14 @@ pub fn hex_string_to_private(hex_string: String) -> Result<PrivKey, Error> {
         Ok(_) => Ok(PrivKey { bytes: data }),
         Err(_) => Err(Error::InvalidPrivateKey),
     }
+}
+
+pub fn recover(message: &[u8], signature: &[u8]) -> Result<[u8; 65], Error> {
+    let msg = Message::from_slice(&message).unwrap();
+    let rec_id = RecoveryId::from_i32(signature[64] as i32).map_err(|_err| Error::InvalidSignature)?;
+    let sig = RecoverableSignature::from_compact(&signature[0..64], rec_id).map_err(|_err| Error::InvalidSignature)?;
+    let rec_pubkey = &SECP256K1.recover(&msg, &sig).map_err(|_err|Error::InvalidSignature)?;
+    Ok(rec_pubkey.serialize_uncompressed())
 }
 
 #[test]
@@ -162,4 +146,27 @@ fn test_new() {
     assert_eq!(key1.public_key().len(), 130);
     let key2 = PrivKey::new();
     assert_ne!(key1.bytes, key2.bytes);
+}
+#[test]
+fn test_recover() {
+    let mut signature = [0u8; 65];
+    let mut message = [0u8; 32];
+    hex::decode_to_slice(
+        "99f4ef1005ae6c43548520e08dd11477e9ea59317087f9c6f33bc79eb701b14b043ff0d177bc419e585c0ecae42420fabb837e602c8a3578ea17dd1a8ed862e301",
+        &mut signature as &mut [u8],
+    )
+    .unwrap();
+
+    hex::decode_to_slice(
+        "2cddfe87fe695e09ee430b7f60b4c585a3063613872130baf414537f46732501",
+        &mut message as &mut [u8],
+    )
+    .unwrap();
+
+    let res = recover(&message, &signature).unwrap();
+    let pubkey = hex::encode(&res[0..65]);
+    assert_eq!(
+        pubkey,
+        String::from("044e18306ae9ef4ec9d07bf6e705442d4d1a75e6cdf750330ca2d880f2cc54607c9c33deb9eae9c06e06e04fe9ce3d43962cc67d5aa34fbeb71270d4bad3d648d9")
+    );
 }
