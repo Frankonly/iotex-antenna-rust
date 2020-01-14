@@ -2,7 +2,7 @@ use super::*;
 use crate::address::{v1::AddrV1, Address};
 use std::collections::HashMap;
 
-pub struct accounts {
+pub struct Accounts {
     accounts: HashMap<String, account>,
 }
 

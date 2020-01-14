@@ -13,3 +13,4 @@ hex = "0.4.0"
 secp256k1 = { version = "0.15.5", features = ["recovery"] }
 rand = "0.6.0"
 bech32 = "0.7.1"
+ethabi = "10.0.0"
